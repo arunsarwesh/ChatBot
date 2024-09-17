@@ -1,1 +1,5 @@
 # metabot
+
+Packages:
+  django
+  transformers
