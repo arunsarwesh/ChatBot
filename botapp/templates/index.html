@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metaverse Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 700px;
+            margin: 50px auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(127, 127, 127, 0.463);
+        }
+        .chat-header {
+            background-color: #336833;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .chat-box {
+            padding: 20px;
+            height: 500px;
+            overflow-y: scroll;
+            border-bottom: 1px solid #ccc;
+        }
+        .chat-message {
+            margin-bottom: 20px;
+        }
+        .bot-message {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: left;
+        }
+        .user-message {
+            background-color: #0f100f;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: right;
+        }
+        .input-box {
+            padding: 10px;
+            display: flex;
+        }
+        .input-box input {
+            width: 85%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .input-box button {
+            width: 15%;
+            padding: 10px;
+            background-color: #0f100f9b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .input-box button:hover {
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>Metaverse Chatbot</h2>
+    </div>
+    <div class="chat-box" id="chat-box">
+    </div>
+    <div class="input-box">
+        <input type="text" id="user-input" placeholder="Type a message..." onkeydown="if (event.key === 'Enter') sendMessage()">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    function sendMessage() {
+        const userInput = document.getElementById('user-input');
+        const chatBox = document.getElementById('chat-box');
+        const userMessage = userInput.value.trim();
+
+        if (userMessage === '') return;
+
+        // Append user message to the chat box
+        const userMessageDiv = document.createElement('div');
+        userMessageDiv.classList.add('chat-message', 'user-message');
+        userMessageDiv.textContent = userMessage;
+        chatBox.appendChild(userMessageDiv);
+
+        // Clear input
+        userInput.value = '';
+
+        // Send user message to the backend (Django view)
+        fetch('/chatbot-response/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(), // Attach CSRF token if required
+            },
+            body: JSON.stringify({ message: userMessage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.classList.add('chat-message', 'bot-message');
+            botMessageDiv.textContent = data.response;  // Use response from the server
+            chatBox.appendChild(botMessageDiv);
+
+            // Scroll to the bottom of the chat
+            chatBox.scrollTop = chatBox.scrollHeight;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Function to get the CSRF token from the Django cookies
+    function getCSRFToken() {
+        let cookieValue = null;
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith('csrftoken=')) {
+                cookieValue = cookie.substring('csrftoken='.length, cookie.length);
+                break;
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+</body>
+</html>
